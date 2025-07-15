@@ -1,261 +1,271 @@
-// import React, { useState } from "react";
-// import { Transaction } from "@solana/web3.js";
-// import { Buffer } from "buffer";
+import React, { useState } from 'react';
+import { Connection, Transaction, VersionedTransaction, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Buffer } from 'buffer';
+if (typeof window !== 'undefined') {
+  // @ts-ignore
+  window.Buffer = Buffer;
+}
 
-// const pixelStyle = {
-//   fontFamily: "'Press Start 2P', cursive",
-//   backgroundColor: "#111",
-//   color: "#fff",
-//   border: "2px solid #fff",
-//   padding: "32px 24px",
-//   borderRadius: "18px",
-//   boxShadow: "0 4px 32px rgba(255,255,255,0.15)",
-//   maxWidth: 520,
-//   margin: "40px auto",
-//   textAlign: "center" as const,
-//   transition: "box-shadow 0.2s, background 0.2s",
-// };
+const SAMPLE_BASE64_TX =
+  'AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAFqQwQwQAAAGQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8='; // This is a dummy, replace with a real one if needed
 
-// const inputStyle = {
-//   fontFamily: "'Press Start 2P', cursive",
-//   padding: "8px",
-//   border: "1px solid #fff",
-//   borderRadius: 0,
-//   width: "90%",
-//   background: "#222",
-//   color: "#fff",
-//   fontSize: 10,
-//   marginBottom: 8,
-// };
+const SolanaTransactionTool: React.FC = () => {
+  const [rawTransaction, setRawTransaction] = useState<string>('');
+  const [decodedTransaction, setDecodedTransaction] = useState<string>('');
+  const [connection] = useState<Connection>(new Connection(clusterApiUrl('mainnet-beta')));
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
 
-// const buttonStyle = {
-//   fontFamily: "'Press Start 2P', cursive",
-//   marginLeft: 8,
-//   padding: "8px 12px",
-//   background: "#fff",
-//   color: "#000",
-//   border: "2px solid #000",
-//   borderRadius: 0,
-//   cursor: "pointer",
-//   fontSize: 10,
-// };
+  const decodeTransaction = async () => {
+    setError('');
+    setLoading(true);
 
-// const TxCodec = () => {
-//   // Encode
-//   const [txJson, setTxJson] = useState("");
-//   const [encoded, setEncoded] = useState("");
-//   const [encodeError, setEncodeError] = useState("");
-//   // Decode
-//   const [txBase64, setTxBase64] = useState("");
-//   const [decoded, setDecoded] = useState("");
-//   const [decodeError, setDecodeError] = useState("");
-
-//   const handleEncode = () => {
-//     setEncodeError("");
-//     setEncoded("");
-//     try {
-//       const txObj = JSON.parse(txJson);
-//       const tx = Transaction.from(txObj);
-//       const base64 = Buffer.from(tx.serialize()).toString("base64");
-//       setEncoded(base64);
-//     } catch (e: any) {
-//       setEncodeError(e.message || "Invalid transaction JSON");
-//     }
-//   };
-
-//   const handleDecode = () => {
-//     setDecodeError("");
-//     setDecoded("");
-//     try {
-//       const buf = Buffer.from(txBase64, "base64");
-//       const tx = Transaction.from(buf);
-//       setDecoded(JSON.stringify(tx, null, 2));
-//     } catch (e: any) {
-//       setDecodeError(e.message || "Invalid base64 transaction");
-//     }
-//   };
-
-//   return (
-//     <div style={pixelStyle}>
-//       <h1 style={{ fontSize: 18, marginBottom: 24 }}>Solana Tx Encoder/Decoder</h1>
-//       {/* Encode Section */}
-//       <div style={{ marginBottom: 32 }}>
-//         <h2 style={{ fontSize: 12, margin: "12px 0" }}>Encode Transaction (JSON → Base64)</h2>
-//         <textarea
-//           style={inputStyle}
-//           rows={6}
-//           placeholder="Paste transaction JSON here..."
-//           value={txJson}
-//           onChange={e => setTxJson(e.target.value)}
-//         />
-//         <br />
-//         <button style={buttonStyle} onClick={handleEncode}>Encode</button>
-//         {encodeError && <div style={{ color: "#ff5555", fontSize: 10, margin: "8px 0" }}>{encodeError}</div>}
-//         {encoded && (
-//           <div style={{
-//             wordBreak: "break-all",
-//             fontSize: 9,
-//             background: "#000",
-//             color: "#fff",
-//             padding: "8px",
-//             borderRadius: 0,
-//             margin: "8px 0",
-//             border: "1px dashed #fff",
-//             overflowWrap: "break-word",
-//             maxWidth: "100%",
-//             display: "inline-block",
-//           }}>
-//             <b>Base64:</b> {encoded}
-//           </div>
-//         )}
-//       </div>
-//       {/* Decode Section */}
-//       <div>
-//         <h2 style={{ fontSize: 12, margin: "12px 0" }}>Decode Transaction (Base64 → JSON)</h2>
-//         <textarea
-//           style={inputStyle}
-//           rows={3}
-//           placeholder="Paste base64 transaction here..."
-//           value={txBase64}
-//           onChange={e => setTxBase64(e.target.value)}
-//         />
-//         <br />
-//         <button style={buttonStyle} onClick={handleDecode}>Decode</button>
-//         {decodeError && <div style={{ color: "#ff5555", fontSize: 10, margin: "8px 0" }}>{decodeError}</div>}
-//         {decoded && (
-//           <pre style={{
-//             fontSize: 9,
-//             background: "#000",
-//             color: "#fff",
-//             padding: "8px",
-//             borderRadius: 0,
-//             margin: "8px 0",
-//             border: "1px dashed #fff",
-//             overflowWrap: "break-word",
-//             maxWidth: "100%",
-//             display: "inline-block",
-//             textAlign: "left"
-//           }}>{decoded}</pre>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default TxCodec; 
-
-
-
-import React, { useState } from "react";
-import { Transaction, SystemProgram, PublicKey } from "@solana/web3.js";
-import { Buffer } from "buffer";
-
-// Make Buffer available globally (important for Vite/React)
-window.Buffer = Buffer;
-
-const TxCodec = () => {
-  const [base64Input, setBase64Input] = useState("");
-  const [decodedOutput, setDecodedOutput] = useState("");
-  const [decodeError, setDecodeError] = useState("");
-
-  const [encodedOutput, setEncodedOutput] = useState("");
-  const [encodeError, setEncodeError] = useState("");
-
-  // Handles decoding from base64 string
-  const handleDecode = () => {
     try {
-      const buf = Buffer.from(base64Input, "base64");
-      const tx = Transaction.from(buf);
+      if (!rawTransaction.trim()) {
+        throw new Error('Please enter a transaction');
+      }
 
-      const txSummary = {
-        recentBlockhash: tx.recentBlockhash,
-        feePayer: tx.feePayer?.toBase58(),
-        signatures: tx.signatures.map((sig) => ({
-          publicKey: sig.publicKey.toBase58(),
-          signature: sig.signature?.toString("base64") ?? null,
-        })),
-        instructions: tx.instructions.map((ix) => ({
-          programId: ix.programId.toBase58(),
-          keys: ix.keys.map((k) => ({
-            pubkey: k.pubkey.toBase58(),
-            isSigner: k.isSigner,
-            isWritable: k.isWritable,
-          })),
-          data: ix.data.toString("base64"),
-        })),
-      };
+      // Try decoding as base64 first (versioned transaction)
+      try {
+        const buffer = Buffer.from(rawTransaction, 'base64');
+        // VersionedTransaction.deserialize throws if signatures mismatch
+        const versionedTx = VersionedTransaction.deserialize(buffer);
+        setDecodedTransaction(JSON.stringify(versionedTx, null, 2));
+        setLoading(false);
+        return;
+      } catch (e: any) {
+        if (
+          e?.message?.includes('Expected signatures length to be equal to the number of required signatures')
+        ) {
+          setError(
+            'VersionedTransaction Error: The transaction is missing required signatures. Make sure you sign the transaction before serializing.'
+          );
+          setLoading(false);
+          return;
+        }
+        // console.log('VersionedTransaction error:', e);
+      }
 
-      setDecodedOutput(JSON.stringify(txSummary, null, 2));
-      setDecodeError("");
+      // Try decoding as legacy transaction
+      try {
+        const buffer = Buffer.from(rawTransaction, 'base64');
+        const legacyTx = Transaction.from(buffer);
+        setDecodedTransaction(
+          JSON.stringify(
+            {
+              signatures: legacyTx.signatures.map((sig) => ({
+                publicKey: sig.publicKey.toString(),
+                signature: sig.signature?.toString('base64') || null,
+              })),
+              recentBlockhash: legacyTx.recentBlockhash,
+              feePayer: legacyTx.feePayer?.toString(),
+              instructions: legacyTx.instructions.map((ix) => ({
+                programId: ix.programId.toString(),
+                keys: ix.keys.map((k) => ({
+                  pubkey: k.pubkey.toString(),
+                  isSigner: k.isSigner,
+                  isWritable: k.isWritable,
+                })),
+                data: ix.data.toString('base64'),
+              })),
+            },
+            null,
+            2
+          )
+        );
+        setLoading(false);
+        return;
+      } catch (e: any) {
+        if (
+          e?.message?.includes("Cannot read properties of undefined") ||
+          e?.message?.includes("toJSON")
+        ) {
+          setError(
+            'Legacy Transaction Error: The transaction data is malformed or missing required fields. Ensure you are using a valid, signed, base64-encoded Solana transaction.'
+          );
+          setLoading(false);
+          return;
+        }
+        // console.log('Legacy Transaction error:', e);
+      }
+
+      throw new Error(
+        "Could not decode transaction. Make sure it's a valid base64-encoded, signed Solana transaction. See the help section for instructions."
+      );
     } catch (err: any) {
-      setDecodeError("Decoding failed: " + err.message);
-      setDecodedOutput("");
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setDecodedTransaction('');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handles encoding a dummy transaction
-  const handleEncode = () => {
-    try {
-      const dummyTx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: new PublicKey("11111111111111111111111111111111"),
-          toPubkey: new PublicKey("22222222222222222222222222222222"),
-          lamports: 1000,
-        })
-      );
-      dummyTx.recentBlockhash = "33333333333333333333333333333333";
-      dummyTx.feePayer = new PublicKey("11111111111111111111111111111111");
+  const clearAll = () => {
+    setRawTransaction('');
+    setDecodedTransaction('');
+    setError('');
+  };
 
-      const serialized = dummyTx.serialize({
-        requireAllSignatures: false,
-        verifySignatures: false,
-      });
-
-      setEncodedOutput(serialized.toString("base64"));
-      setEncodeError("");
-    } catch (err: any) {
-      setEncodeError("Encoding failed: " + err.message);
-      setEncodedOutput("");
-    }
+  const pasteSample = () => {
+    setRawTransaction(SAMPLE_BASE64_TX);
+    setDecodedTransaction('');
+    setError('');
   };
 
   return (
-    <div style={{ fontFamily: "monospace", padding: 20, background: "#111", color: "#fff" }}>
-      <h2>🔐 Solana Transaction Encoder / Decoder</h2>
+    <div className="solana-transaction-tool">
+      <h2>Solana Transaction Encoder/Decoder</h2>
 
-      <div style={{ marginTop: 20 }}>
-        <h4>🔓 Decode Base64 Transaction</h4>
-        <textarea
-          rows={5}
-          style={{ width: "100%", background: "#222", color: "#fff" }}
-          placeholder="Paste base64 transaction..."
-          value={base64Input}
-          onChange={(e) => setBase64Input(e.target.value)}
-        />
-        <button onClick={handleDecode} style={{ marginTop: 10 }}>Decode</button>
-        {decodeError && <p style={{ color: "red" }}>{decodeError}</p>}
-        {decodedOutput && (
-          <pre style={{ background: "#000", padding: 10, marginTop: 10 }}>
-            {decodedOutput}
+      <button
+        style={{ marginBottom: 10 }}
+        onClick={() => setShowHelp((v) => !v)}
+      >
+        {showHelp ? 'Hide Help & Examples' : 'Show Help & Examples'}
+      </button>
+      {showHelp && (
+        <div className="help-section" style={{ marginBottom: 20, background: '#f1f8ff', padding: 16, borderRadius: 6, border: '1px solid #b6d4fe' }}>
+          <h3>How to Generate a Valid Solana Transaction (Base64)</h3>
+          <p>
+            <b>1. Sign the transaction before serializing.</b><br />
+            <b>2. Use <code>tx.serialize()</code> and encode with base64.</b><br />
+            <b>3. Paste the base64 string below.</b>
+          </p>
+          <pre style={{ background: '#e9ecef', padding: 10, borderRadius: 4 }}>
+{`import {
+  Connection, Keypair, VersionedTransaction, TransactionMessage, SystemProgram, PublicKey
+} from '@solana/web3.js';
+
+const connection = new Connection('https://api.mainnet-beta.solana.com');
+const payer = Keypair.generate(); // Replace with your actual signer
+const recipient = new PublicKey('RecipientPublicKeyHere');
+
+(async () => {
+  const blockhash = await connection.getLatestBlockhash();
+  const message = new TransactionMessage({
+    payerKey: payer.publicKey,
+    recentBlockhash: blockhash.blockhash,
+    instructions: [
+      SystemProgram.transfer({
+        fromPubkey: payer.publicKey,
+        toPubkey: recipient,
+        lamports: 1000,
+      }),
+    ],
+  }).compileToV0Message();
+  const tx = new VersionedTransaction(message);
+  tx.sign([payer]);
+  const serialized = tx.serialize();
+  const base64Tx = Buffer.from(serialized).toString('base64');
+  console.log('Base64-encoded versioned tx:', base64Tx);
+})();`}
           </pre>
-        )}
+          <p>
+            <b>Sample base64 transaction (for demo):</b>
+            <br />
+            <code style={{ wordBreak: 'break-all', background: '#fff', padding: 4, borderRadius: 2 }}>{SAMPLE_BASE64_TX}</code>
+          </p>
+          <p>
+            <b>Common errors:</b>
+            <ul>
+              <li><b>VersionedTransaction Error:</b> Missing required signatures. Sign the transaction before serializing.</li>
+              <li><b>Legacy Transaction Error:</b> Malformed or incomplete transaction. Use a valid, signed transaction.</li>
+            </ul>
+          </p>
+        </div>
+      )}
+
+      <div className="input-section">
+        <label htmlFor="rawTransaction">Transaction (base64):</label>
+        <textarea
+          id="rawTransaction"
+          value={rawTransaction}
+          onChange={(e) => setRawTransaction(e.target.value)}
+          placeholder="Paste base64-encoded transaction here"
+          rows={5}
+        />
       </div>
 
-      <div style={{ marginTop: 40 }}>
-        <h4>🧾 Encode Dummy Transaction</h4>
-        <button onClick={handleEncode}>Encode</button>
-        {encodeError && <p style={{ color: "red" }}>{encodeError}</p>}
-        {encodedOutput && (
-          <textarea
-            rows={4}
-            style={{ width: "100%", background: "#000", color: "#0f0", marginTop: 10 }}
-            value={encodedOutput}
-            readOnly
-          />
-        )}
+      <div className="button-group">
+        <button onClick={decodeTransaction} disabled={loading}>
+          {loading ? 'Decoding...' : 'Decode Transaction'}
+        </button>
+        <button onClick={clearAll}>Clear All</button>
+        <button onClick={pasteSample} type="button">Paste Sample Transaction</button>
       </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {decodedTransaction && (
+        <div className="output-section">
+          <label>Decoded Transaction:</label>
+          <pre>{decodedTransaction}</pre>
+        </div>
+      )}
+
+      <style>{`
+        .solana-transaction-tool {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          font-family: Arial, sans-serif;
+        }
+        .input-section, .output-section {
+          margin-bottom: 20px;
+        }
+        label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: bold;
+        }
+        textarea, pre {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          background-color: #f9f9f9;
+          font-family: monospace;
+          overflow-x: auto;
+        }
+        pre {
+          min-height: 200px;
+          max-height: 400px;
+          overflow-y: auto;
+        }
+        .button-group {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+        button {
+          padding: 8px 16px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+        button:hover {
+          background-color: #0056b3;
+        }
+        button:disabled {
+          background-color: #cccccc;
+          cursor: not-allowed;
+        }
+        .error-message {
+          color: #dc3545;
+          margin-bottom: 20px;
+          padding: 10px;
+          border: 1px solid #dc3545;
+          border-radius: 4px;
+          background-color: #f8d7da;
+        }
+        .help-section code, .help-section pre {
+          font-size: 13px;
+        }
+      `}</style>
     </div>
   );
 };
 
-export default TxCodec;
+export default SolanaTransactionTool;
